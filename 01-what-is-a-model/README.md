@@ -52,11 +52,11 @@ All scripts set a seed, so the output below is reproducible. The scripts run on 
 
 Two ways to get the gradient.
 
-**Numeric gradient.** Move a parameter by a small `eps`, and divide the change in the loss by `eps`:
+**Numeric gradient.** Move a parameter by a small step $\epsilon$ (`eps` in the code), and divide the change in the loss by $\epsilon$:
 
-```
-dL/dw ≈ (L(w + eps) - L(w)) / eps
-```
+$$
+\frac{\partial L}{\partial w} \approx \frac{L(w + \epsilon) - L(w)}{\epsilon}
+$$
 
 This is the slope of the straight line through two nearby points on the loss curve. It approximates the slope of the curve itself (the tangent) at `w`:
 
@@ -77,29 +77,45 @@ This is the slope of the straight line through two nearby points on the loss cur
 
 The script uses `eps = 0.001`, and does the same for `b`.
 
-**Formula gradient.** Derive the slope exactly with the chain rule. For point `i`, the error is
+**Formula gradient.** Derive the slope exactly with the chain rule. For point $i$, the error and the loss are
 
-```
-e_i = w*x_i + b - y_i
-L   = (1/N) * (e_1^2 + e_2^2 + ... + e_N^2)
-```
+$$
+e_i = w x_i + b - y_i
+$$
 
-`dL/dw` is a partial derivative: it asks how `L` changes when only `w` changes, with `b`, `x`, and `y` held constant. `L` depends on `w` only through each `e_i`, so the chain rule multiplies two simpler derivatives:
+$$
+L = \frac{1}{N} \sum_{i=1}^{N} e_i^2
+$$
+
+$\partial L / \partial w$ is a partial derivative: it asks how $L$ changes when only $w$ changes, with $b$, $x$, and $y$ held constant. $L$ depends on $w$ only through each $e_i$, so the chain rule multiplies two simpler derivatives:
 
 | Step | Derivative | Why |
 |---|---|---|
-| `L` with respect to `e_i` | `dL/de_i = (1/N) * 2e_i` | The derivative of `e^2` is `2e` |
-| `e_i` with respect to `w` | `de_i/dw = x_i` | In `w*x_i + b - y_i`, only `w*x_i` changes with `w` |
-| `e_i` with respect to `b` | `de_i/db = 1` | In `w*x_i + b - y_i`, only `b` changes with `b` |
+| $L$ with respect to $e_i$ | $\dfrac{\partial L}{\partial e_i} = \dfrac{2 e_i}{N}$ | The derivative of $e^2$ is $2e$ |
+| $e_i$ with respect to $w$ | $\dfrac{\partial e_i}{\partial w} = x_i$ | In $w x_i + b - y_i$, only $w x_i$ changes with $w$ |
+| $e_i$ with respect to $b$ | $\dfrac{\partial e_i}{\partial b} = 1$ | In $w x_i + b - y_i$, only $b$ changes with $b$ |
 
 Multiply and add over all points:
 
-```
-dL/dw = sum_i (dL/de_i * de_i/dw) = (1/N) * sum_i (2e_i * x_i) = mean(2e * x)
-dL/db = sum_i (dL/de_i * de_i/db) = (1/N) * sum_i (2e_i * 1)   = mean(2e)
-```
+$$
+\frac{\partial L}{\partial w}
+= \sum_{i=1}^{N} \frac{\partial L}{\partial e_i} \cdot \frac{\partial e_i}{\partial w}
+= \frac{1}{N} \sum_{i=1}^{N} 2 e_i x_i
+$$
 
-`formula_grad` computes exactly these two lines.
+$$
+\frac{\partial L}{\partial b}
+= \sum_{i=1}^{N} \frac{\partial L}{\partial e_i} \cdot \frac{\partial e_i}{\partial b}
+= \frac{1}{N} \sum_{i=1}^{N} 2 e_i
+$$
+
+A sum divided by $N$ is a mean, so `formula_grad` computes these as:
+
+```python
+e = w * x + b - y
+dw = (2 * e * x).mean()
+db = (2 * e).mean()
+```
 
 ```
 grad_fn           lr           w           b        loss
