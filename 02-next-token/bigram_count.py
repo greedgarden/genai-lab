@@ -47,7 +47,7 @@ def main():
         print(f'{a:>2}{b:>2}{f:>14.4g}')
 
     print(probs[('a', 'n')])
-    row_sum = sum(probs['a', b] for b in chars)
+    row_sum = sum(probs[('a', b)] for b in chars)
     print(f'row_sum: {row_sum}')
 
 if __name__ == "__main__":
